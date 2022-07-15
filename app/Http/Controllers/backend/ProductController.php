@@ -7,6 +7,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Productrequest;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -61,9 +62,9 @@ class ProductController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show()
     {
-        //
+        
     }
 
     /**
@@ -72,9 +73,10 @@ class ProductController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Product $product)
     {
-        //
+        // dd($product);
+        return view('admin.produits.edit',compact('product'))->with('categories',Category::all());
     }
 
     /**
@@ -84,9 +86,27 @@ class ProductController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Product $product)
     {
-        //
+        $request->validate([
+            'name'=> ['required', 'string'],
+            'price' =>['required'],
+      ]);
+
+      $image = $product->image;
+      if ($request->hasFile('image')) {
+          Storage::delete($product->image);
+          $image = $request->file('image')->store('public/products');
+      }
+
+      $product->update([
+          'name'=> $request ->name,
+          'price'=>$request ->price,
+          'image'=> $image,
+          'category_id' =>$request ->category_id,
+      ]);
+
+      return to_route('products.index');
     }
 
     /**
@@ -95,8 +115,10 @@ class ProductController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Product $product)
     {
-        //
+        Storage::delete($product->image);
+        $product->delete();
+        return to_route('products.index');
     }
 }
